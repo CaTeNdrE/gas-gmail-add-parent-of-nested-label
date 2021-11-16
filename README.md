@@ -46,6 +46,6 @@ This script enables using 'label:foo' to do that same search, which is my prefer
       
 ### Contributing
 
-This is my first Google Apop Script and also my first Git which is likely reflected in odd and/or choices in both spaces.
+This is my first Google Apop Script and also my first Git which is likely reflected in poor and/or odd choices in both spaces.
 
 Constructive feedback is welcomed and of course please advise of any issues/bugs encountered.  
