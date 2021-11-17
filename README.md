@@ -43,40 +43,38 @@ In this menu, the label 'eriador' has 4 descendents:
 
 **Search Eriador for Isildur's Bane**  
   
-To search for "Isildur's Bane" in 'eriador' including its descendents ('shire', 'westfarthing', 'rivendell', and 'breeland') the Gmail search needs to look something like:
+To search for "Isildur's Bane" in 'eriador' including its descendents ('shire', 'westfarthing', 'rivendell', and 'breeland') the Gmail search needs to be a variation of:
 
-   1.       "Isildur's Bane" label:eriador OR label:eriador-shire OR label:eriador-shire-westfarthing OR label:eriador-rivendell OR label:eriador-breeland
-                 
-   2.       "Isildur's Bane" label:({eriador eriador-shire eriador-shire-westfarthing eriador-rivendell eriador-breeland})
-               
-   3.        "Isildur's Bane" label:(eriador || eriador-shire || eriador-shire-westfarthing || eriador-rivendell || eriador-breeland)
+     Search:  "Isildur's Bane" label:({eriador eriador-shire eriador-shire-westfarthing eriador-rivendell eriador-breeland})
    
    
 ### One Label to Bind them All  
-By using this script you are able to do the search using:
+Using this script you are able to find Isildur's Bane whereever it is in Eriador using:  
 
-              "Isildur's Bane" label:eriador
+     Search:  "Isildur's Bane" label:eriador  
 
-## Installing
-### Overview
-1. Create a Google Apps Script (GAS) Project
-2. Paste the **Code.gs** file contents into your GAS Project's Code.gs file.
-3. Add the dependency **Advanced Gmail API Service** to your GAS Project.  
+
+
+## Installation  
+   
+A.  Create a Google Apps Script (GAS) Project  
+B.  Paste the Code.gs file contents into your GAS Project's Code.gs file.  
+C.  Add the dependency Advanced Gmail API Service to your GAS Project.  
 
    
-### Create Google Apps Script Project
+### A. Create Google Apps Script Project
 1. Sign in to your Google Account in Chrome web browser.
-2. Navigate to **script.google.com**  *If this is the first time you've been to script.google.com, click View Dashboard.*
-3. At the top left, click **New project**.
-5. Name the project by clicking on '**Untitled project**' 
+2. Navigate to script.google.com  *If this is the first time you've been to script.google.com, click View Dashboard.*
+3. At the top left, click 'New project'.
+5. Name the project by clicking on 'Untitled project'. 
 
-### Paste the Code
+### B. Paste the Code
 6. Delete any pre-populated code from the script editor (e.g. function myFunction(), etc.)
 7. Using a text editor copy the contents the Code.gs file in this Git and paste it into the script editor.
 8. Click the Save button.
 
-### Add dependency
-9. Click on the plus (+)symbol on 'Services  +' to open the 'Add a service' dialog.
+### C. Add dependency
+9. Click on the plus (+) symbol on 'Services  +' to open the 'Add a service' dialog.
 10. Type 'Gmail' in the 'Identifier' field.
 11. Click 'Add'
 
