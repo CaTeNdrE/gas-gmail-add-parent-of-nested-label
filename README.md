@@ -1,51 +1,85 @@
 # gas-gmail-add-parent-of-nested-label
 
-Google Action Script that searches Gmail for emails labeled with a nested user label and applies the parent label if missing.
+Google Apps Script that adds ancestors' labels to Gmail messages labelled with one of their descendents.
 
-The intent of this script is to create a Gmail search experience more akin to a directory search. 
+The goal of this script is to create a Gmail label search experience more akin to a directory search. 
 
-Gmail's custom user labels can be nested below one another and Gmail displays labels in the menu in a way that closely mimics a computer's directory structure. Unlike a search on a computer though, Gmail does not have the option of including sub-labels without specifically adding them all one by one.
+Gmail's custom user labels can be nested below one another and Gmail displays labels in the menu in a way that closely mimics a computer's directory structure. Unlike a search on a computer, when searching a label Gmail does not automatically include its descendents. 
 
-My preferred search within labels would by default 'include' rather than 'exclude' labels nested below the label I search (descendcents).
+This script was developed because my preferred default approach to searching within labels is to 'include' rather than 'exclude' their descendents.
 
-     ------------
-     Example Menu
+## Example  
+**Ancestor**  
+Label located in the same branch as another but at least one level higher up (e.g. parent, grandparent, etc.)  
+   
+**Descendent**  
+Label located in the same branch as another but at least one level lower down (e.g. child, grandchild, etc.)  
+
+In this menu, the label 'eriador' has 4 descendents:  
+
      ------------
      Sent
      All Mail 
      Spam
      Drafts
-     foo 
-        > bar
-             > toto
-        > not
-        > some
-     dot       
-    ------------   
+     eriador
+        > shire
+             > westfarthing
+        > rivendell
+        > breeland
+     ------------   
 
-Note in the example menu that the Gmail User Label 'foo' has 4 descendents (3 children & 1 grandchild):
   
-     3 Children:   'bar' ('foo-bar'), 'not' (foo-not'), and 'some' (foo-some')
-     1 Grandchild: 'toto' ('foo-bar-toto') 
+**4 Descendents of 'eriador'**  
 
-     'bar' is the parent of 'toto' in addition to being a child of 'foo'  
-     'toto' is a child of 'bar' in addition to being a grandchild of 'foo'
-     'bar' , 'not', and 'some' are all sibblings
+     3 Children:   'shire' ('eriador-shire'), 'rivendell' ('eriador-rivendell'), and 'breeland' ('eriador-breeland')
+     1 Grandchild: 'westfarthing' ('eriador-shire-westfarthing') 
+     
+**Also note**
+
+     'shire' is an ancestor of 'westfarthing'  
+     'westfarthing' is a descendent of both 'shire' and 'eriador'
      
 
-If you don't apply parent labels to emails labeled with their descendents, a search in label 'foo' that also includes its descendents ('bar', 'not', 'some', and 'toto') would look something like:
+**Search Eriador for Isildur's Bane**  
+  
+To search for "Isildur's Bane" in 'eriador' including its descendents ('shire', 'westfarthing', 'rivendell', and 'breeland') the Gmail search needs to look something like:
 
-          'label:foo' OR 'label:foo-bar OR label:foo-bar-toto OR label:foo-not OR label:foo-some'
+   1.       "Isildur's Bane" label:eriador OR label:eriador-shire OR label:eriador-shire-westfarthing OR label:eriador-rivendell OR label:eriador-breeland
                  
-     or   'label:({foo foo-bar foo-bar-toto foo-not foo-some})'
+   2.       "Isildur's Bane" label:({eriador eriador-shire eriador-shire-westfarthing eriador-rivendell eriador-breeland})
                
-     or   'label:(foo || foo-bar || foo-bar-toto || foo-not || foo-some)'
+   3.        "Isildur's Bane" label:(eriador || eriador-shire || eriador-shire-westfarthing || eriador-rivendell || eriador-breeland)
    
-This script enables using 'label:foo' to do that same search, which is my preferred approach.  
+   
+### One Label to Bind them All  
+By using this script you are able to do the search using:
 
-      
-### Contributing
+              "Isildur's Bane" label:eriador
 
-This is my first Google Apop Script and also my first Git which is likely reflected in poor and/or odd choices in both spaces.
+## Installing
+### Overview
+1. Create a Google Apps Script (GAS) Project
+2. Paste the **Code.gs** file contents into your GAS Project's Code.gs file.
+3. Add the dependency **Advanced Gmail API Service** to your GAS Project.  
 
-Constructive feedback is welcomed and of course please advise of any issues/bugs encountered.  
+   
+### Create Google Apps Script Project
+1. Sign in to your Google Account in Chrome web browser.
+2. Navigate to **script.google.com**  *If this is the first time you've been to script.google.com, click View Dashboard.*
+3. At the top left, click **New project**.
+5. Name the project by clicking on '**Untitled project**' 
+
+### Paste the Code
+6. Delete any pre-populated code from the script editor (e.g. function myFunction(), etc.)
+7. Using a text editor copy the contents the Code.gs file in this Git and paste it into the script editor.
+8. Click the Save button.
+
+### Add dependency
+9. Click on the plus (+)symbol on 'Services  +' to open the 'Add a service' dialog.
+10. Type 'Gmail' in the 'Identifier' field.
+11. Click 'Add'
+
+## Feedback
+This is my first Google Apps Script as well as my first Git.  This may be reflected in poor and/or odd choices in both spaces. Constructive feedback is welcomed and, of course, please advise of any issues/bugs encountered.  
+
