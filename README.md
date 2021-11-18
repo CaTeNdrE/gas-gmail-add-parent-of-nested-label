@@ -2,7 +2,7 @@
 
 Google Apps Script that adds ancestors' labels to Gmail messages labelled with one of their descendants.
 
-The goal of this script is to create a Gmail label search experience more akin to a directory search. 
+The goal of this script is to create a Gmail label search experience more akin to a directory search without having to duplicate and combine filter rules. 
 
 Gmail's custom user labels can be nested below one another and Gmail displays labels in the menu in a way that closely mimics a computer's directory structure. Unlike a search on a computer, when searching a label Gmail does not automatically include its descendants. 
 
@@ -57,7 +57,8 @@ Using this script you are able to find Isildur's Bane wherever it is in Eriador 
    
 A.  Create a Google Apps Script (GAS) Project  
 B.  Paste the Code.gs file contents into your GAS Project's Code.gs file.  
-C.  Add the dependency Advanced Gmail API Service to your GAS Project.  
+C.  Add the dependency Advanced Gmail API Service to your GAS Project. 
+D.  Create Trigger
 
   
 ### A. Create Google Apps Script Project
@@ -75,6 +76,23 @@ C.  Add the dependency Advanced Gmail API Service to your GAS Project.
 9. Click on the plus (+) symbol on 'Services  +' to open the 'Add a service' dialog.
 10. Type 'Gmail' in the 'Identifier' field.
 11. Click 'Add'
+
+### D. Create Trigger
+12. Click on the 'Trigger' menu button (alarm clock image) in the left menu.
+13. Click the '+  Add Trigger' button at the bottom right of the Triggers page.
+14. Configure Trigger:  
+
+Trigger Settings:  
+
+     Choose which function to run:       addParentLabel  
+     Choose which deployment should run: Head  
+     Select event source:                Time-driven  
+
+Set the following to your preference.  Here are my settings:  
+    
+     Select type of time based trigger:  Minutes timer  
+     Select minute interval:             Every 5 minutes   
+     Failure notification settings:      Notify me immediately   
 
 ## Feedback
 This is my first Google Apps Script as well as my first Git.  This may be reflected in poor and/or odd choices in both spaces. Constructive feedback is welcomed and, of course, please advise of any issues/bugs encountered.  
