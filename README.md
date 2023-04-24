@@ -56,7 +56,7 @@ Using this script you are able to find Isildur's Bane wherever it is in Eriador 
 ## Installation  
    
 A.  Create a Google Apps Script (GAS) Project  
-B.  Paste the Code.gs file contents into your GAS Project's Code.gs file.  
+B.  Paste the Code.js file contents into your GAS Project's Code.gs file.  
 C.  Add the dependency Advanced Gmail API Service to your GAS Project.  
 D.  Authorize project to access your Gmail.  
 E.  Create Trigger
