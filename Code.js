@@ -1,230 +1,344 @@
- /***
- *       _____                    _           _          _     
- *      / ____|                  | |         | |        | |    
- *     | (___  _   _ _ __   ___  | |     __ _| |__   ___| |___ 
- *      \___ \| | | | '_ \ / __| | |    / _` | '_ \ / _ \ / __|
- *      ____) | |_| | | | | (__  | |___| (_| | |_) |  __/ \__ \
- *     |_____/ \__, |_| |_|\___| |______\__,_|_.__/ \___|_|___/
- *              __/ |                                          
- *             |___/                                           
- *
+/**
  * 
+ *   +----------------------------------------+
+ *   |  GAS Gmail Add Parent of Nested Label  |
+ *   +----------------------------------------+ 
+ *   
+ *   rev. 2023-06-27
+ *   rev. 2021-11-17
+ *   
+ *   https://github.com/CaTeNdrE/gas-gmail-add-parent-of-nested-label
+ *   
+ *  
+ *   Google Action Script (GAS) that searches Gmail messages in nested
+ *   user labels and applies their parent label if it is missing.
  * 
- *  rev. 2021-11-17
+ *   Ensures that a Gmail labeled with:
+ *     
+ *   "sport/hockey"     is also in "sport"
+ *   "sport/basketball" is also in "sport"
+ *   "sport/lax/field"  is also in "sport" as well as "sport/lax"
  * 
- *  https://github.com/CaTeNdrE/gas-gmail-add-parent-of-nested-label
- *
- * 
- */
-    
-
-
-var labelSkipList = [    // Array of labels to exclude
-  "Sync Issues/Conflicts",
-  "Sync Issues/Server Failures",
-  "Sync Issues/Local Failures",
-    ]; 
-
- var logLevel = 1;   //  Choose from: 1 (info [default]), 2 (verbose), 3 (debug) 
-
-// define some arrays
-
-var allUdates = '0';
-var namePad = ""; 
-var namesList = [];
-var nameLogPad = [];
-var space = String.fromCharCode(160); // define a non-breaking space for use as needed.
-
-var numPad = 2;          // default number padding
-var skipCount = 0;
-var skipLog = "";
-var padHead = "8";
-var skipHead = ("Skipped").padEnd(padHead, space);
-var ignoreHead = ("Ignored").padEnd(padHead, space);
-
-// skipPad = getPadding(labelSkipList,1);
-
-
-
-
-/***
- *      _           _          _     
- *     | |         | |        | |    
- *     | |     __ _| |__   ___| |___ 
- *     | |    / _` | '_ \ / _ \ / __|
- *     | |___| (_| | |_) |  __/ \__ \
- *     |______\__,_|_.__/ \___|_|___/
- *                                   
+ *   Skip Lists are used to exclude labels from this behavior.  
+ *   A label can be excluded by both lists without causing any issues.
  */
 
+//    Offsprint Skip List
+//  +-----------------------------------------------------------------
+//  | Array of labels whose offspring (children, grandchildren, etc.) 
+//  | will be excluded from syncing. To also exclude the actual labels 
+//  | in this list, they must also be added to the "Labels Skip List". 
+//  +----------------------------------------------------------------- 
+      const offspring = [
+ //       "Sync Issues",
+ //       "mymessages",
+ //       "theOffspring",    // eg. Non-existent Ancestor  
+ //       "INBOX"            // eg. System Label
+      ];
+
+//    Labels Skip List
+//  +------------------------------------------------------ 
+//  | Array of individual labels to exclude from syncing to 
+//  | their parents, grandparents, great-grandparents, etc.
+//  +------------------------------------------------------
+      const skiplabel = [
+//        "SENT",               // eg. System Label
+//        "noLabelsPlease",     // eg. Non-existent label       
+//        "notReal/andWrong"    // eg. Non-existent label
+      ];
+
+//    Log Level (loglevel) 
+//  +--------------------------------------------- 
+//  | 1 = info [default], 2 = verbose,  3 - debug)
+//  +---------------------------------------------  
+      const loglevel = 1; 
+
+
+/**
+ *    +---------------------------------+
+ *    |                                 | 
+ *    |  Be careful editing below here  |
+ *    |                                 | 
+ *    +---------------------------------+ 
+ */
+
+const logs = {};
+const pad = {};
+const list = {};
+const len = {};
+// const namesList = [];
+const names = { All: [], System: [], List: []  };
+const sp = String.fromCharCode(160); // define a non-breaking space for use as needed.
+const padDef = 3;          // default number padding
+const skiplog = { 
+  Name: [], Type: [], Output: [], Count: 0
+};
+
+/** 
+ *    +------------------+
+ *    |  addParentLabel  |
+ *    +------------------+
+ */
 
 function addParentLabel() {
 
-  Logger.log("Log Level: " + logLevel);
+  if (!([1, 2, 3].indexOf(loglevel) > -1)) {
+    loglevel = 1;
+  }
 
-  var gmailLabels = Gmail.Users.Labels.list('me');
+  mylabels = Gmail.Users.Labels.list('me').labels;
+  mylabels.forEach(thisLabel => names.All.push(thisLabel.name));
 
-  numPad = gmailLabels.labels.length.toString().length;
+  let labelcount = names.All.length.toString();
+  let padnum = labelcount.length;
   
-  
-  Logger.log(("Fetched").padEnd(padHead, space) + gmailLabels.labels.length.toString().padStart(numPad) + space + "GMAIL" + space + space + "labels");
+  let fetchlog = labelcount.padStart(padnum) + " GMAIL labels retrieved";
+  let uline = '\n' + "-".padEnd(fetchlog.length, "-");
+  fetchlog +=  uline;
 
-  if (logLevel > 2) {
+  if (loglevel > 2) {
     let line = 0;
-    gmailLabels.labels.forEach(thisLabel => console.log((++line).toString().padStart(numPad) + space + thisLabel));
+    mylabels.forEach(thisLabel => console.log((++line).toString().padStart(padDef)
+      + sp + thisLabel));
   }
-
-  var sysLabelList = gmailLabels.labels.filter(thisLabel => thisLabel.type == "system");    //  is a system label
-  Logger.log(skipHead + sysLabelList.length.toString().padStart(numPad) + space + "SYSTEM labels");
-
-  var filteredList = gmailLabels.labels.filter(
-    thisLabel => 
-      thisLabel.type == "user"                        //  is a user label
-      && thisLabel.name.search("/") > 0                 //  has a parent
-      && matchFunction(thisLabel.name, labelSkipList, numPad, 1) == 0  //  is not in Label Skip List array
-  );
-
-
-  var orphanLabelList = gmailLabels.labels.filter(thisLabel => (!(thisLabel.name.search("/") > 0) && thisLabel.type == "user" ));    //  is an orphan 
-  Logger.log(skipHead + orphanLabelList.length.toString().padStart(numPad) + space + "ORPHAN labels");
- 
-  var skipLabelList = gmailLabels.labels.filter(thisLabel => (thisLabel.name.search("/") > 0 && matchFunction(thisLabel.name, labelSkipList, numPad) > 0 && thisLabel.type == "user" ));    //  is excluded because on skiplist 
-  if (skipLabelList.length > 0) Logger.log(skipHead + skipLabelList.length.toString().padStart(numPad) + space + "on Skip List" + (logLevel > 1 ? '\n' + "----------------------" + '\n' + skipLog : ""));
-
-  var ignoreSkip = gmailLabels.labels.filter(thisLabel => (matchFunction(thisLabel.name, labelSkipList, numPad) > 0 && thisLabel.type == "system"));    //  On skiplist but skipped as system 
-  if (ignoreSkip.length > 0) Logger.log(ignoreHead + ignoreSkip.length.toString().padStart(numPad) + space + "on Skip List because" + space + (ignoreSkip.length > 1 ? "they are SYSTEM labels" : "it is a SYSTEM label"));
-
-  var orphanSkip = gmailLabels.labels.filter(thisLabel => (matchFunction(thisLabel.name, labelSkipList, numPad) > 0 && thisLabel.type == "user" && !(thisLabel.name.search("/") > 0)));    //  On skiplist but skipped as orphan  
-  if (orphanSkip.length > 0) Logger.log(ignoreHead + orphanSkip.length.toString().padStart(numPad) + space + "on Skip List because " + (orphanSkip.length > 1 ? "they are ORPHANS" : "it is an ORPHAN"));
   
-  var labelSys = "";
+  //  System labels
+  list.System = mylabels.filter(thisLabel => thisLabel.type == "system");
+  list.System.forEach(thisLabel => names.System.push(thisLabel.name));
+  
+  fetchlog += '\n' + list.System.length.toString().padStart(padnum) + " are system labels";
+
+  //  User labels with no parent
+  len.orphan = (list.orphan = mylabels.filter(
+    thisLabel => (!(thisLabel.name.search("/") > 0) && thisLabel.type == "user")
+    )).length.toString();    
+
+  fetchlog += '\n' + len.orphan.padStart(padnum) + " have no parent";
+
+  //  In a skip list and match a valid label 
+  const relevant = mylabels.filter(
+    thisLabel => thisLabel.name.search("/") > 0
+      && thisLabel.type == "user"
+      && matchLabel(thisLabel.name, skiplabel, offspring, padDef) > 0
+  );    
+
+  if (relevant.length) {
+    fetchlog += '\n' + relevant.length.toString().padStart(padnum)
+    + " match skip lists"
+  };
+
+  //  User label has parent and not excluded by a skip list  
+  const valid = mylabels.filter(
+    thisLabel => thisLabel.type == "user" 
+      && thisLabel.name.search("/") > 0 
+      && matchLabel(thisLabel.name, skiplabel, offspring, padDef, 1) == 0
+      );
+  len.Valid = valid.length.toString();
+  
+
+  fetchlog += uline + '\n' + len.Valid.padStart(padnum)
+    + " user labels to search";
  
-  for (let i = 0; i < ignoreSkip.length; i++) {
-    i > 0 ? labelSys += '\n': "";
-    labelSys += (i + 1).toString().padStart(numPad) + ignoreSkip[i].name;
+  Logger.log(fetchlog);
 
-  }
-        
-  filteredList.forEach(thisLabel => namesList.push(thisLabel.name));
-  namesList.sort();
-  namePad = getPadding(namesList, 1);    // length of longest string plus x spaces (or 1 if omitted);
+  if (skiplog.Name.length) { thisPad = getPadding(skiplog.Name, 3)};  
+    
+  
+  
+  // validate skip lists 
+  if (offspring.length) validate(offspring, "Offspring", padnum);  
+  if (skiplabel.length) validate(skiplabel, "Labels", padnum);
 
-  Logger.log(("Search").padEnd(padHead, space) + filteredList.length.toString().padStart(numPad) + space + "child labels in Gmail messages" + (logLevel > 1 ? logLabels(namesList, "41") : "")); 
+  // List  matching user labels if loglevel > 1 
+  if (loglevel > 1) {
 
+    for (let i = 0; i < skiplog.Name.length; i++) {
+    skiplog.Output += (skiplog.Name[i].padEnd(thisPad, sp) + skiplog.Type[i] + '\n'); 
+  };
 
+    let txt = "Gmail User Labels that matched a Skip List";
+    Logger.log(txt + '\n' + "-".padEnd(txt.length, "-") + '\n' + skiplog.Output);
+  };
+   
+  valid.forEach(thisLabel => names.List.push(thisLabel.name));
+  names.List.sort();
+  let padname = getPadding(names.List, 1);    // length of longest string plus x sps (or 1 if omitted);
+  checking = "Checking messages in " + len.Valid + " labels"; 
+  Logger.log(checking + (loglevel > 1 ? logLabels(names.List, checking.length, padname) : ""));
 
-/***
- *      ______                 _ _     
- *     |  ____|               (_) |    
- *     | |__   _ __ ___   __ _ _| |___ 
- *     |  __| | '_ ` _ \ / _` | | / __|
- *     | |____| | | | | | (_| | | \__ \
- *     |______|_| |_| |_|\__,_|_|_|___/
- *                                     
+/**
+ *    +-----------------+
+ *    |  Search Emails  |
+ *    +-----------------+
  */
+
+  for (let i = 0; i < len.Valid; i++) {
     
+    let label = valid[i].name;
+
+    // Parent label's Gmail ID (retrieve using index from name)
+    let thisParent = label.replace("/" + label.split("/").pop(), "");
+    let thisParentIndex = mylabels.findIndex(thisIndex => thisIndex.name == thisParent); 
+    let thisParentId = mylabels[thisParentIndex].id;
+
     
-    for (let i = 0; i < filteredList.length; i++) {
-      let thisChild = filteredList[i].name;
-      let thisParent = thisChild.replace("/" + thisChild.split("/").pop(), "");
-      let thisParentIndex = gmailLabels.labels.findIndex(thisIndex => thisIndex.name == thisParent);  // get Label ID for parent
-      let thisParentId = gmailLabels.labels[thisParentIndex].id;  // get Label ID for parent
-      let thisQuery = "\-label:" + thisParent + " label:" + thisChild; // this label but not its parent
+    let thisQuery = "\-label:" + thisParent + " label:" + label; // this label but not its parent
+
+    let msgList = Gmail.Users.Messages.list("me", { "q": thisQuery }).messages;  // list of matching messages
+  
+    if (msgList) {
+      var allUpdates = +1;
+      let thisLog = "";
+    
+      for (let j = 0; j < msgList.length; j++) {  // for each msg in list
+        let msgNum = +j + 1;
+        let msgId = msgList[j].id;
+        let addLabel = thisParentId;
+        thisLog += msgNum.toString().padStart(padDef, sp) + sp + "\"" + thisParent + "\"" + sp + "added" + sp + "to" + sp + "msgID" + sp + msgId.padEnd(17, sp) + " ";
       
-      let msgList = Gmail.Users.Messages.list("me", {"q":thisQuery}).messages;  // list of matching messages
-      if (msgList) {
-        var allUpdates = +1;        
-        let thisLog = "";
-        for (let j = 0; j < msgList.length; j++) {  // for each msg in list
-          let msgNum = +j + 1;
-          let msgId = msgList[j].id;
-          let addLabel = thisParentId;
-          thisLog += msgNum.toString().padStart(numPad, space) + space + "\"" + thisParent + "\"" + space + "added" + space + "to" + space + "msgID" + space + msgId.padEnd(17, space) +" ";
-          Gmail.Users.Messages.modify(
-            {
-              'addLabelIds': [addLabel]
-            },
+        Gmail.Users.Messages.modify(
+          {
+            'addLabelIds': [addLabel]
+          },
             'me', msgId
-          );
-        }
+        );
+      };
 
-        let thisLogPad = +numPad + 40 + (msgList.length > 1 ? 2 : 0 ) + thisChild.length + thisParent.length;
-        Logger.log(msgList.length.toString().padStart(numPad, space) + space + (msgList.length > 1 ? "messages" : "message") + space + "with \"" + thisChild + "\"" + space + (msgList.length > 1 ? "are" : "is") + space + "missing the label \"" + thisParent + "\"" + (logLevel > 1 ? '\n' + "--".padEnd(thisLogPad, "-") + '\n' + thisLog : "")); 
-      }        
-    }
-    if (!allUpdates) Logger.log("No messages found with a nested label and also missing its parent");  
+      let thisLogPad = + padDef + 40 + (msgList.length > 1 ? 2 : 0) + label.length + thisParent.length;
+      Logger.log(msgList.length.toString().padStart(padDef, sp) + sp + (msgList.length > 1 ? "messages" : "message") + sp + "with \"" + label + "\"" + sp + (msgList.length > 1 ? "were" : "was") + sp + "missing the label \"" + thisParent + "\"" + (loglevel > 1 ? '\n' + "--".padEnd(thisLogPad, "-") + '\n' + thisLog : ""));
     
-}     
+    }; 
 
-function logLabels(labelArr, titleLen) {
-    let varOutput = '\n' + ("-").padEnd(titleLen, "-") + '\n'; 
-    for (let i = 0; i < labelArr.length; i++) {
-      let thisLabel = (i+1).toString().padStart(numPad, space) + space + labelArr[i].padEnd(namePad);
-      varOutput += thisLabel;
-    }
-  return varOutput;
-  }
+  };
+
+  if (!allUpdates) Logger.log("All labelled messages included the labels of their ancestors");  
+
+}
 
 
 
-
-/***
- *      __  __       _       _     
- *     |  \/  |     | |     | |    
- *     | \  / | __ _| |_ ___| |__  
- *     | |\/| |/ _` | __/ __| '_ \ 
- *     | |  | | (_| | || (__| | | |
- *     |_|  |_|\__,_|\__\___|_| |_|
- *                                     
+/**
+ *    +--------------+
+ *    |  Log Labels  |
+ *    +--------------+
  */
 
+function logLabels(arr, num, pad) {
+  let log = '\n' + ("-").padEnd(num, "-") + '\n';
+  for (let i = 0; i < arr.length; i++) {
+    let label = (i + 1).toString().padStart(padDef, sp) + sp + 
+    arr[i].replaceAll(' ', sp).padEnd(pad);
+    log += label;
+  }
+  return log;
+}
 
-function matchFunction(strVal, matchArr, numPad, logIt) {
-  skipPad = getPadding(matchArr, 1);
-  for (let i = 0; i < matchArr.length; i++) {
-    let matchStr = matchArr[i];
-    if (strVal == matchStr) {
-      if (logIt == 1) {
-        skipCount = +skipCount + 1;
-        skipMatch = skipCount.toString().padStart(numPad) + space + strVal.padEnd(skipPad);
-        skipCount > 1 ? skipLog += '\n': "";
-        skipLog += skipMatch; 
+
+/**
+ *    +-----------------------+
+ *    |  Skip List Validation |
+ *    +-----------------------+
+ */
+
+function validate(list, name, pad) {
+  
+  let len = list.length;
+  let log = len.toString().padStart(pad) + (len == 1 ? " entry" : " entries")  + " in " + name + " skip list"
+
+  let nomatch = list.filter(thisLabel => names.All.indexOf(thisLabel) == -1);
+  let system = list.filter(thisLabel => names.System.includes(thisLabel));
+  let nl = nomatch.length, sl = system.length;
+
+  (nl || sl) && (log += '\n' + "-".padEnd(log.length, "-")); 
+    
+  if (nl) {
+
+    log +=  '\n' + nl.toString().padStart(pad) + (nl > 1 ? " don't" : " doesn't") + " exist:";
+
+    for (let i = 0; i < nl; i++) {
+      
+      ([i] < 1) && (log += ("[").padStart(pad, sp));
+      log += sp + nomatch[i];
+      (([i] == (nl - 1)) && (log += " ]")) || (log += ","); 
+
+    };
+
+  };
+
+  if (sl) {
+
+    log +=  '\n' + sl.toString().padStart(pad) + (sl > 1 ? " are system labels" : " is a system label") + " and ignored:";
+
+    for (let i = 0; i < sl; i++) {
+      
+      ([i] < 1) && (log += ("[").padStart(pad, sp));
+      log += sp + system[i];
+      (([i] == (sl - 1)) && (log += " ]")) || (log += ","); 
+
+    };
+
+  };
+
+  Logger.log(log);
+
+}
+
+
+/**
+ *    +-----------------------+
+ *    |  matchLabel Function  |
+ *    +-----------------------+
+ */
+
+function matchLabel(strVal, arrVal, arrDes, padDef, log, pad) {
+
+  for (let i = 0; i < arrDes.length; i++) {
+
+    if (strVal.startsWith(arrDes[i] + "/")) {
+
+      if (log == 1) {
+        skiplog.Count += 1;
+        skiplog.Name.push(skiplog.Count.toString().padStart(padDef) + sp + strVal);
+        skiplog.Type.push(("Ancestor:" + sp + arrDes[i]).replaceAll(' ', sp));
       }
       return 1;
+    }
+
+    for (let i = 0; i < arrVal.length; i++) {
+      if (strVal == arrVal[i]) {
+        if (log == 1) {
+          skiplog.Count += 1;
+          skiplog.Name.push(skiplog.Count.toString().padStart(padDef) + sp + strVal.replaceAll(' ', sp));
+          skiplog.Type.push("Labels Skip List".replaceAll(' ', sp));
+        }
+        return 1;
       }
+    }
   }
   return 0;
 }
 
-
-
-
-/***
- *      _____          _     _ _             
- *     |  __ \        | |   | (_)            
- *     | |__) |_ _  __| | __| |_ _ __   __ _ 
- *     |  ___/ _` |/ _` |/ _` | | '_ \ / _` |
- *     | |  | (_| | (_| | (_| | | | | | (_| |
- *     |_|   \__,_|\__,_|\__,_|_|_| |_|\__, |
- *                                      __/ |
- *                                     |___/ 
+/**
+ *    +--------------------+
+ *    |  Padding Function  |
+ *    +--------------------+
  */
 
-
-function getPadding(list, extra) {     // return length of longest string in array for column padding 
-  if (!extra) extra = 1;    // define 'extra' spaces if not set
-  if (!Array.isArray(list)) {    // If String recieved, convert to Array
+// returns length of longest string in array for column padding 
+function getPadding(list, extra) {     
+  if (!extra) extra = 1;         // define 'extra' spaces if not set
+  if (!Array.isArray(list)) {    // if string, convert to array
     var oldList = list;
     var newValue = "x";
-    var list = [ list, newValue ];   
-    Logger.log("**  Type Error: \"" + oldList + "\" was a String. Now converted to Array \"" + list + "\"" );    
+    var list = [list, newValue];
+    Logger.log("**  Type Error: \"" + oldList + "\" was a String. Now converted to Array \"" + list + "\"");
   }
-  var longest = list.reduce(function (a, b) // determine longest string in the array
-    {
-      return a.length > b.length ? a : b;
-    }
-  );
+
+  if (list.length) {
+      var longest = list.reduce(function (a, b) // determine longest string in the array
+        { return a.length > b.length ? a : b; });
+  };
+
   var padding = longest.length + extra; // set padding as longest string plus 'extra' spaces
   return padding;
 }
-
