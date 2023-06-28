@@ -1,6 +1,6 @@
 # gas-gmail-add-parent-of-nested-label
 
-Google Apps Script that adds ancestors' labels to Gmail messages labelled with one of their descendants.
+Google Apps Script that adds ancestors' labels to Gmail messages labeled with one of their descendants.
 
 The goal of this script is to create a Gmail label search experience more akin to a directory search without having to duplicate and combine filter rules. 
 
@@ -57,7 +57,7 @@ Using this script you are able to find Isildur's Bane wherever it is in Eriador 
    
 A.  Create a Google Apps Script (GAS) Project  
 B.  Paste the Code.js file contents into your GAS Project's Code.gs file.  
-C.  Add the dependency Advanced Gmail API Service to your GAS Project.  
+C.  Add the dependency 'Advanced Gmail API Service' to your GAS Project.  
 D.  Authorize project to access your Gmail.  
 E.  Create Trigger
   
@@ -69,7 +69,7 @@ E.  Create Trigger
 
 ### B. Paste the Code
 5. Delete any pre-populated code from the script editor (e.g. function myFunction(), etc.)
-6. Using a text editor copy the contents the Code.gs file in this Git and paste it into the script editor.
+6. Using a text editor copy the contents of the Code.gs file and paste it into the script editor.
 7. Click the Save button.
 
 ### C. Add dependency
@@ -83,7 +83,7 @@ E.  Create Trigger
 13. Click on the 'Run' button beside 'Debug' at the top of the page.
 14. Click on 'Review permissions' in the 'Authorization required' dialog that appears.
 15. Choose the Google account you'd like to allow the script to access.
-16. You will see a warning that 'Google hasn’t verified this app' because... Google Hasn't Verified this App :-)
+16. You will see a warning that 'Google hasn’t verified this app' because... Google hasn't verified this App :-)
 17. Click on the 'Advanced' link
 18. Click on the 'Go to [custom script name here] (unsafe)' link.
 19. Read the warning about the fact that this script wants to access your Gmail account.    
@@ -91,7 +91,7 @@ E.  Create Trigger
 
 **Please Note**:
 
-     If you completed steps 11 - 20, but took a too long, that script instance will have timed
+     If you completed steps 11 - 20, but took too long, that script instance will have timed
      out with a permission-related error.  Don't worry, future instances will succeed.  Simply
      manually run the script again to confirm by repeating steps 12 - 14.  You should no longer
      be prompted for authorization.
@@ -124,7 +124,7 @@ Level 3 = debug
 You can change the level by editing the number in Code.gs
 
 ## Feedback
-This is my first Google Apps Script as well as my first Git.  This may be reflected in poor and/or odd choices in both spaces. Constructive feedback is welcomed and, of course, please advise of any issues/bugs encountered.  
+This was my first Google Apps Script as well as my first Git.  This may be reflected in poor and/or odd choices in both spaces. Constructive feedback is welcomed and, of course, please advise of any issues/bugs encountered.  
 
 
 
