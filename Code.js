@@ -179,14 +179,14 @@ function addParentLabel() {
     // Parent label's Gmail ID (retrieve using index from name)
     let thisParent = label.replace("/" + label.split("/").pop(), "");
     let thisParentIndex = mylabels.findIndex(thisIndex => thisIndex.name == thisParent); 
-    let thisParentId = mylabels[thisParentIndex].id;
+    let thisParentId = mylabels[thisParentIndex]?.id;
 
     
     let thisQuery = "\-label:" + thisParent + " label:" + label; // this label but not its parent
 
     let msgList = Gmail.Users.Messages.list("me", { "q": thisQuery }).messages;  // list of matching messages
   
-    if (msgList) {
+    if (msgList && thisParentId) {
       var allUpdates = +1;
       let thisLog = "";
     
